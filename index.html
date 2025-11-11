@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinema - Data Visuals</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top, #0a0a0a 0%, #000 80%);
+      color: #fff;
+      padding: 2rem;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 300;
+      letter-spacing: 0.3rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ff6b00, #ffcc00);
+      
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #ccc;
+      margin-bottom: 2rem;
+    }
+
+    .chart-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      margin-bottom: 3rem;
+      transition: 0.3s;
+    }
+
+    .chart-section:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.15);
+    }
+
+    h2 {
+      font-weight: 400;
+      color: #ffcc00;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.1rem;
+    }
+
+    .film-strip {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(255, 255, 255, 0.02) 40px,
+        rgba(255, 255, 255, 0.02) 80px
+      );
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="film-strip"></div>
+  <div class="container">
+    <h1>🎬 Cinema</h1>
+    <p class="subtitle">Data that tells cinematic stories</p>
+
+    <div class="chart-section">
+      <h2>🎭 Average Worldwide Gross by Genre</h2>
+      <div id="chart"></div>
+    </div>
+
+    <div class="chart-section">
+      <h2>💰 Production Budget vs Worldwide Gross</h2>
+      <div id="scatter"></div>
+    </div>
+
+    <div class="chart-section">
+      <h2>⭐ Top 10 Movies by IMDB Rating</h2>
+      <div id="toprated"></div>
+    </div>
+  </div>
+
+  <script>
+    const brightConfig = {
+      background: "transparent",
+      style: { cell: { stroke: "transparent" } },
+      axis: {
+        labelColor: "#fff",
+        titleColor: "#ffcc00",
+        labelFontSize: 12,
+        titleFontSize: 14,
+        gridColor: "rgba(255,255,255,0.15)"
+      },
+      legend: {
+        labelColor: "#fff",
+        titleColor: "#ffcc00",
+        labelFontSize: 12,
+        titleFontSize: 13
+      },
+      title: { color: "#fff" }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // 🎭 Average Worldwide Gross by Genre
+      vegaEmbed('#chart', {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "url": "movies.json" },
+        "transform": [
+          { "filter": "datum['Major Genre'] != null && datum['Worldwide Gross'] != null" },
+          {
+            "aggregate": [
+              { "op": "mean", "field": "Worldwide Gross", "as": "Avg Gross" }
+            ],
+            "groupby": ["Major Genre"]
+          }
+        ],
+        "mark": {
+          "type": "bar",
+          "cornerRadiusEnd": 5,
+          "stroke": "#fff",
+          "strokeWidth": 0.5,
+          "tooltip": true
+        },
+        "encoding": {
+          "x": {
+            "field": "Major Genre",
+            "type": "nominal",
+            "title": "Genre",
+            "sort": "-y"
+          },
+          "y": {
+            "field": "Avg Gross",
+            "type": "quantitative",
+            "title": "Average Worldwide Gross (USD)"
+          },
+          "color": {
+            "field": "Major Genre",
+            "type": "nominal",
+            "scale": { "scheme": "tableau10" },
+            "legend": null
+          }
+        },
+        "width": 650,
+        "height": 400,
+        "config": brightConfig
+      });
+
+      // 💰 Scatter Plot: Production Budget vs Worldwide Gross
+      vegaEmbed('#scatter', {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "url": "movies.json" },
+        "transform": [
+          { "filter": "datum['Production Budget'] != null && datum['Worldwide Gross'] != null" }
+        ],
+        "mark": {
+          "type": "circle",
+          "opacity": 0.8,
+          "size": 120,
+          "stroke": "#fff",
+          "strokeWidth": 0.3,
+          "tooltip": true
+        },
+        "encoding": {
+          "x": {
+            "field": "Production Budget",
+            "type": "quantitative",
+            "title": "Production Budget (USD)"
+          },
+          "y": {
+            "field": "Worldwide Gross",
+            "type": "quantitative",
+            "title": "Worldwide Gross (USD)"
+          },
+          "color": {
+            "field": "Major Genre",
+            "type": "nominal",
+            "scale": { "scheme": "category20" },
+            "legend": { "title": "Genre" }
+          },
+          "size": {
+            "field": "IMDB Rating",
+            "type": "quantitative",
+            "title": "IMDB Rating"
+          }
+        },
+        "width": 650,
+        "height": 400,
+        "config": brightConfig
+      });
+
+      // ⭐ Top 10 Movies by IMDB Rating
+      vegaEmbed('#toprated', {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "url": "movies.json" },
+        "transform": [
+          { "filter": "datum['IMDB Rating'] != null" },
+          {
+            "window": [{ "op": "rank", "as": "rank" }],
+            "sort": [{ "field": "IMDB Rating", "order": "descending" }]
+          },
+          { "filter": "datum.rank <= 10" }
+        ],
+        "mark": {
+          "type": "bar",
+          "cornerRadiusEnd": 5,
+          "stroke": "#fff",
+          "strokeWidth": 0.4,
+          "tooltip": true
+        },
+        "encoding": {
+          "x": {
+            "field": "IMDB Rating",
+            "type": "quantitative",
+            "title": "IMDB Rating"
+          },
+          "y": {
+            "field": "Title",
+            "type": "nominal",
+            "sort": "-x",
+            "title": "Movie"
+          },
+          "color": {
+            "field": "IMDB Rating",
+            "type": "quantitative",
+            "scale": { "scheme": "inferno" },
+            "legend": null
+          }
+        },
+        "width": 650,
+        "height": 400,
+        "config": brightConfig
+      });
+    });
+  </script>
+</body>
+</html>
