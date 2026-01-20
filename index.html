@@ -1,412 +1,742 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cinema ROI - Investment Story</title>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-color: #0b0c10;
-      --text-color: #c5c6c7;
-      --highlight: #66fcf1;
-      --secondary: #45a29e;
-      --panel-bg: #1f2833;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-      overflow-x: hidden; /* Vízszintes görgetés tiltása */
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-
-    /* Typography */
-    h1, h2 {
-      font-family: 'Playfair Display', serif;
-      color: #fff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinema Analytics | Professional Dashboard</title>
     
-    h1 { font-size: 3.5rem; margin-bottom: 0.5rem; line-height: 1.2; }
-    h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--highlight); }
-    
-    p { font-size: 1.1rem; margin-bottom: 1.5rem; color: #a0a0a0; }
-    
-    .intro {
-      text-align: center;
-      padding: 4rem 0;
-      border-bottom: 1px solid var(--secondary);
-    }
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    /* Story Section Layout - JAVÍTVA */
-    .story-section {
-      display: flex;
-      flex-wrap: wrap; /* Engedjük tördelni, ha kicsi a képernyő */
-      margin: 4rem 0;
-      gap: 2rem; /* Távolság a szöveg és diagram között */
-      align-items: flex-start; /* Fentre igazítás */
-    }
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --bg-body: #f4f6fb;
+            --card-bg: linear-gradient(180deg, #ffffff, #fbfdff);
+            --sidebar-grad: linear-gradient(180deg,#081029 0%, #0b1630 100%);
+            --accent: #2563eb;
+            --accent-2: #10b981;
+            --muted: #6b7280;
+            --border: rgba(15, 23, 42, 0.06);
+            --glass: rgba(255,255,255,0.6);
+            --shadow-sm: 0 4px 10px rgba(16,24,40,0.06);
+            --shadow-lg: 0 12px 30px rgba(16,24,40,0.12);
+        }
 
-    .story-text {
-      flex: 1 1 300px; /* Nőhet, csökkenhet, bázis 300px */
-      padding-right: 1rem;
-      min-width: 0; /* fontos: engedi a flex-elemnek, hogy ténylegesen zsugorodjon */
-    }
+        * { box-sizing: border-box; }
 
-    .story-viz {
-      flex: 2 1 300px; /* A diagram kétszer annyi helyet kap, de min. 300px */
-      background: var(--panel-bg);
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      border-left: 4px solid var(--secondary);
-      width: 100%; /* Biztos ami biztos */
-      min-height: 350px; /* Hogy ne ugráljon betöltéskor */
-      overflow: hidden; /* Megakadályozza a túllógást */
-      min-width: 0; /* fontos: különben a chart “min-content” szélességen kilóghat */
-    }
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background: var(--bg-body);
+            color: #0f172a;
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .highlight-text {
-      color: var(--highlight);
-      font-weight: 500;
-    }
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-grad);
+            color: #e6eefc;
+            padding: 28px 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+        }
 
-    /* Interactive Hint */
-    .interaction-hint {
-      font-size: 0.85rem;
-      color: var(--highlight);
-      background: rgba(102, 252, 241, 0.1);
-      padding: 5px 10px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-bottom: 1rem;
-    }
+        .sidebar h2 { font-size: 1.15rem; margin: 0; color: #bcd7ff; letter-spacing: 1px; }
+        .sidebar h2 i { color: var(--accent); margin-right: 10px; }
 
-    /* Viz container - JAVÍTVA */
-    .vis-container { 
-      width: 100%;
-      display: block;
-    }
+        .control-group { margin-bottom: 20px; }
+        .control-label { display:block; margin-bottom:8px; font-size:0.75rem; color:var(--muted); font-weight:700; }
 
-    /* Vega(-Embed) responsive + page-style fit */
-    .story-viz .vega-embed,
-    .story-viz .vega-embed > div {
-      width: 100% !important;
-      max-width: 100% !important;
-    }
+        select, input[type="range"] {
+            width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.04); color: #eaf2ff; font-weight:600;
+        }
 
-    .story-viz canvas,
-    .story-viz svg {
-      display: block;
-      max-width: 100% !important;
-      height: auto !important;
-      margin: 0 auto;
-    }
+        select:focus { outline: none; box-shadow: 0 4px 14px rgba(37,99,235,0.12); }
 
-    /* Small screens: keep panels comfortable */
-    @media (max-width: 768px) {
-      .container { padding: 1.25rem; }
-      .story-viz { padding: 1rem; }
-      h1 { font-size: 2.5rem; }
-    }
+        input[type="range"] { height:8px; background: rgba(255,255,255,0.06); }
+        input[type="range"]::-webkit-slider-thumb { width:18px; height:18px; border-radius:50%; background:var(--accent); cursor: pointer; }
 
-    footer {
-      text-align: center;
-      margin-top: 5rem;
-      padding: 2rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
-  </style>
+        .kpi-box { margin-top:18px; background: rgba(255,255,255,0.04); padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.04); }
+        .kpi-value { font-size:2rem; color:#fff; font-weight:800; display:block; }
+        .kpi-label { color:var(--muted); font-weight:700; font-size:0.75rem; }
+
+        .sidebar-footer { margin-top:18px; color:rgba(188,214,255,0.7); font-size:0.78rem; }
+
+        /* Main */
+        .main-content { margin-left: var(--sidebar-width); flex:1; padding:36px; max-width:calc(100vw - var(--sidebar-width)); }
+        .header-section { margin-bottom:28px; }
+        h1 { font-family:'Merriweather', serif; font-size:2.25rem; margin:0 0 6px 0; color:#07103a; }
+        .subtitle { color:var(--muted); max-width:900px; line-height: 1.6; }
+
+        /* Grid */
+        .dashboard-grid { display:grid; grid-template-columns: repeat(12, 1fr); gap:20px; }
+        .col-12{grid-column:span 12} .col-8{grid-column:span 8} .col-6{grid-column:span 6} .col-4{grid-column:span 4}
+
+        .card { background: var(--card-bg); border-radius:14px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow-sm); transition: transform .18s ease, box-shadow .18s ease; overflow:hidden; }
+        .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+        .card::before{ content:''; position:absolute; left:0; right:0; top:0; height:6px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transform:scaleX(0); transform-origin:left; transition:transform .25s ease; }
+        .card:hover::before{ transform:scaleX(1); }
+
+        .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .card-title { font-weight:700; font-size:1.05rem; color:#07103a; display:flex; gap:10px; align-items:center }
+        .card-title i { color:var(--accent); }
+        .card-desc { color:var(--muted); font-size:0.92rem; margin-bottom:12px; line-height: 1.5; }
+
+        /* Chart container tweaks */
+        .vis-container { width:100%; height:100%; min-height:280px; display:flex; align-items:stretch; }
+        .vis-container .vega-embed { width:100% !important; height:100% !important; background:transparent; }
+        .vega-embed .vega-actions { display:none; }
+        .vega-embed svg { width:100% !important; height:100% !important; }
+
+        /* Small devices */
+        @media (max-width:1200px){ .col-8,.col-6{ grid-column: span 12 } }
+        @media (max-width:1024px){ .sidebar{ position:relative; width:100%; height:auto } .main-content{ margin-left:0; padding:22px } }
+        @media (max-width:640px){ h1{ font-size:1.6rem } .card{ padding:14px } }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    
-    <div class="intro">
-      <h1>Milyen filmbe érdemes befektetni?</h1>
-      <p style="max-width: 700px; margin: 0 auto;">
-        Sok befektetőt elvakítanak a milliárdos bevételek. De minket nem a bevétel érdekel, hanem a 
-        <span class="highlight-text">Megtérülés (ROI)</span>. Ez az elemzés bemutatja, 
-        hogyan találhatjuk meg a piaci réseket az adatok mögött.
-      </p>
-    </div>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-chart-line"></i> Cinema Analyst</h2>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Stratégiai Szűrés (Műfaj)</label>
+            <select id="genreFilter" onchange="updateDashboard()">
+                <option value="All">Teljes Piac (Összes)</option>
+                <option value="Action">Action (Magas Költség)</option>
+                <option value="Adventure">Adventure</option>
+                <option value="Comedy">Comedy (Magas ROI)</option>
+                <option value="Drama">Drama</option>
+                <option value="Horror">Horror</option>
+                <option value="Thriller/Suspense">Thriller</option>
+                <option value="Romantic Comedy">Romantic Comedy</option>
+                <option value="Science Fiction">Sci-Fi</option>
+            </select>
+        </div>
 
-    <div class="story-section">
-      <div class="story-text">
-        <h2>1. A Piac Növekszik, de...</h2>
-        <p>
-          Az elmúlt évtizedekben a filmipar bevételei (arany terület) folyamatosan nőttek. 
-          Látszólag minden rendben van.
-        </p>
-        <p>
-          Azonban ha ráközelítünk az egyes évekre, látható a volatilitás. A befektetői tőke 
-          biztonsága érdekében nem elég csak "jelen lenni" a piacon, 
-          <span class="highlight-text">stratégiailag kell választani</span>.
-        </p>
-        <div class="interaction-hint">Interakció: Húzd az egeret a grafikonon a pontos adatokért!</div>
-      </div>
-      <div class="story-viz">
-        <div id="viz_trend" class="vis-container"></div>
-      </div>
-    </div>
+        <div class="control-group">
+            <label class="control-label">Min. Tőkeigény: <span id="budgetLabel" style="color: #60a5fa; font-weight: 700;">$0M</span></label>
+            <input type="range" id="budgetFilter" min="0" max="200" value="0" step="10" oninput="updateBudgetLabel(); updateDashboard();">
+        </div>
 
-    <div class="story-section">
-      <div class="story-text">
-        <h2>2. A Megtérülés Királyai</h2>
-        <p>
-          Itt válik érdekessé a történet. Bal oldalon a műfajok 
-          <span class="highlight-text">átlagos ROI (Megtérülési)</span> rátáját látod.
-        </p>
-        <p>
-          Meglepő módon nem mindig a legnagyobb büdzséjű filmek hozzák a legjobb arányú hasznot. 
-          A <strong>Horror</strong> és a <strong>Romantic Comedy</strong> gyakran jobban teljesít megtérülésben, 
-          mint a drága Action filmek.
-        </p>
-        <p>
-          <strong>Próbáld ki:</strong> Kattints egy műfajra (pl. "Horror") a bal oldali sávon! 
-          A jobb oldali pöttyök (filmek) frissülnek, és megmutatják az adott műfaj kockázati profilját.
-        </p>
-        <div class="interaction-hint">Interakció: KATTINTS a bal oldali oszlopokra a szűréshez!</div>
-      </div>
-      <div class="story-viz">
-        <div id="viz_dashboard" class="vis-container"></div>
-      </div>
-    </div>
+        <div class="kpi-box">
+            <span class="kpi-label">Elemzett Portfólió</span>
+            <span class="kpi-value" id="kpiCount">-</span>
+        </div>
+        
+      <!-- <div class="sidebar-footer">
+            <p><i class="fas fa-lightbulb"></i> <strong>Pro Tipp:</strong> A <i>Horror</i> műfaj gyakran felülmúlja a piaci átlagot ROI-ban, míg az <i>Action</i> magasabb bevételt, de nagyobb kockázatot jelent.</p>
+        </div>-->
+    </aside>
 
-    <div class="story-section">
-      <div class="story-text">
-        <h2>3. Mikor nyissunk? (Timing)</h2>
-        <p>
-          Megvan a műfaj, de mikor adjuk ki a filmet? Ez a hőtérkép megmutatja a 
-          <span class="highlight-text">bevételi csúcsokat</span>.
-        </p>
-        <p>
-          Jól látszik a nyári szezon (Június-Július) dominanciája az Action/Adventure filmeknél, 
-          míg a Horror filmek Októberben (Halloween) érik el a csúcsot.
-        </p>
-      </div>
-      <div class="story-viz">
-        <div id="viz_heatmap" class="vis-container"></div>
-      </div>
-    </div>
+    <main class="main-content">
+        
+        <div class="header-section">
+            <h1>Film befektetés</h1>
+            <p class="subtitle">
+                A filmipar nem szerencsejáték, hanem kiszámítható trendek sorozata. 
+                Ez a dashboard segít azonosítani az alulértékelt piaci réseket és a túlárazott kockázatokat. 
+                A cél a maximális megtérülés (ROI) elérése.
+            </p>
+        </div>
 
-    <div class="story-section">
-      <div class="story-text">
-        <h2>4. Befektetési Javaslat</h2>
-        <p>
-          Az adatok alapján a következő "Moneyball" stratégiát javasoljuk:
-        </p>
-        <ul>
-          <li><strong>Fókusz:</strong> Közepes költségvetésű Horror vagy Vígjáték.</li>
-          <li><strong>Cél:</strong> Magas ROI elérése alacsony kockázat mellett.</li>
-          <li><strong>Időzítés:</strong> Célzott őszi/téli premier.</li>
-        </ul>
-        <p>
-          Alább láthatóak a Top ROI filmek.
-        </p>
-      </div>
-      <div class="story-viz">
-        <div id="viz_toplist" class="vis-container"></div>
-      </div>
-    </div>
+        <div class="dashboard-grid">
+            
+            <div class="card col-12 h-lg">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-balance-scale-right"></i> A Megtérülés (ROI) Realitása</div>
+                </div>
+                <div class="card-desc">
+                   
+                    <strong>Interakció:</strong> Kattintson egy oszlopra a műfaj kockázati profiljának elemzéséhez! 
+                   
+                </div>
+                <div id="vis_dashboard" class="vis-container"></div>
+            </div>
 
-    <footer>
-      <p>Data Source: Movie Industry Dataset | Visualization: Vega-Lite</p>
-      <p>Készítette: Madarász Ágota - GitHub Pages Project</p>
-    </footer>
+            <div class="card col-8 h-lg">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-search-dollar"></i> Kockázati Mátrix</div>
+                </div>
+                <div class="card-desc">
+                    Ez a diagram leplezi le a piaci mítoszokat. A <span style="color:#ef4444; font-weight:bold;">piros zóna</span> a tőkevesztést jelzi. 
+                    Látható, hogy a 100M+ dolláros költségvetés (jobb oldal) nem garancia a sikerre, sőt: a legnagyobb bukások gyakran itt történnek. 
+                    A "Zöld Zóna" (bal felső sarok) a hatékony tőkekihasználás területe.
+                </div>
+                <div id="vis_scatter" class="vis-container"></div>
+            </div>
 
-  </div>
+            <div class="card col-4 h-lg">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-gem"></i> Top ROI filmek</div>
+                </div>
+                <div class="card-desc">
+                    Ezek a filmek a top ROI példák. Alacsony költségvetésükhöz képest hatalmas bevételt értek el. 
+                </div>
+                <div id="vis_bar" class="vis-container"></div>
+            </div>
 
-  <script>
-    // --- VEGA-LITE KONFIGURÁCIÓ ---
+            <div class="card col-6 h-md">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-clock"></i> Időzítés</div>
+                </div>
+                <div class="card-desc">
+                    A rossz időzítés elronthatja a profitot. A hőtérkép megmutatja, hogy melyik időszakokban volt a legmagasabb az árbevétel.
+                </div>
+                <div id="vis_heatmap" class="vis-container"></div>
+            </div>
 
-    const commonConfig = {
-      background: "transparent",
-      font: "Roboto",
-      axis: {
-        domainColor: "#45a29e",
-        gridColor: "#1f2833",
-        labelColor: "#c5c6c7",
-        titleColor: "#66fcf1"
-      },
-      legend: {
-        labelColor: "#c5c6c7",
-        titleColor: "#fff"
-      },
-      title: { color: "#fff", fontSize: 16 }
-    };
+            <div class="card col-6 h-md">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-chart-line"></i> Az Infláció korrigálás</div>
+                </div>
+                <div class="card-desc">
+                    A növekvő bevételek gyakran csak az inflációt tükrözik. 
+                    A <span style="color:#10b981; font-weight:bold;">zöld vonal</span> a valós (mai értéken számolt) piaci teljesítményt mutatja. 
+                    Észrevehető, hogy a növekedés üteme sokkal mérsékeltebb, mint amit az eredeti bevételi adatok sugallnak.
+                </div>
+                <div id="vis_line" class="vis-container"></div>
+            </div>
 
-    // Fontos opció a layout stabilitáshoz: actions: false (eltünteti a menüt)
-    const embedOpts = { actions: false };
+        </div>
+    </main>
 
-    // 1. CHART: MARKET TREND
-    vegaEmbed('#viz_trend', {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "url": "movies_clean.json" },
-      "width": "container", "height": 300,
-      "autosize": {"type": "fit", "contains": "padding"},
-      "transform": [
-        { "filter": "datum['Release Date'] != null" },
-        { "timeUnit": "year", "field": "Release Date", "as": "Year" }
-      ],
-      "mark": {
-        "type": "area",
-        "line": { "color": "#66fcf1" },
-        "color": {
-          "x1": 1, "y1": 1, "x2": 1, "y2": 0,
-          "gradient": "linear",
-          "stops": [{"offset": 0, "color": "#66fcf1"}, {"offset": 1, "color": "rgba(102, 252, 241, 0.1)"}]
-        }
-      },
-      "encoding": {
-        "x": { "field": "Year", "type": "temporal", "title": null },
-        "y": { 
-          "field": "Worldwide Gross", 
-          "aggregate": "sum", 
-          "type": "quantitative", 
-          "title": "Teljes Piaci Bevétel ($)",
-          "axis": { "format": "$.2s" }
-        },
-        "tooltip": [
-          {"field": "Year", "timeUnit": "year", "title": "Év"},
-          {"field": "Worldwide Gross", "aggregate": "sum", "format": "$.2s", "title": "Összbevétel"}
-        ]
-      },
-      "config": commonConfig
-    }, embedOpts);
+    <script>
+        // --- KONFIGURÁCIÓ ---
+        const DATA_URL = "movies_clean.json";
+        
+        let appState = {
+            genre: "All",
+            minBudget: 0
+        };
 
-    // 2. CHART: DASHBOARD (Linked)
-    vegaEmbed('#viz_dashboard', {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "url": "movies_clean.json" },
-      "vconcat": [
-        {
-          "width": "container", "height": 190,
-          "title": "Kattints egy műfajra! (Átlagos ROI)",
-          "autosize": {"type": "fit", "contains": "padding"},
-          "padding": {"left": 5, "top": 5, "right": 5, "bottom": 35},
-          "transform": [
-            { "filter": "datum['Major Genre'] != null && datum['Production Budget'] > 0" },
-            { "calculate": "(datum['Worldwide Gross'] - datum['Production Budget']) / datum['Production Budget']", "as": "ROI" }
-          ],
-          "mark": { "type": "bar", "cursor": "pointer", "cornerRadiusEnd": 4 },
-          "params": [{
-            "name": "genre_select",
-            "select": {"type": "point", "encodings": ["x"]}
-          }],
-          "encoding": {
-            "x": {
-              "field": "Major Genre",
-              "type": "nominal",
-              "sort": "-y",
-              "axis": {
-                "labelAngle": -25,
-                "labelAlign": "right",
-                "labelBaseline": "middle",
-                "labelPadding": 8,
-                "labelLimit": 140,
-                "tickSize": 4
-              }
+        const commonConfig = {
+            background: "transparent",
+            font: "Inter",
+            axis: {
+                domainColor: "#e2e8f0",
+                gridColor: "#f1f5f9",
+                labelColor: "#64748b",
+                titleColor: "#1e293b",
+                titleFontWeight: 700,
+                titleFontSize: 13,
+                labelFontSize: 12,
+                titleFontSize: 12,
+                labelAngle: 0
             },
-            "y": { "field": "ROI", "aggregate": "mean", "title": "Átlag ROI" },
-            "color": {
-              "condition": {"param": "genre_select", "value": "#66fcf1"},
-              "value": "#2c3e50"
+            legend: {
+                labelColor: "#64748b",
+                titleColor: "#1e293b",
+                titleFontWeight: 600,
+                labelFontSize: 12
             },
-            "tooltip": [{"field": "Major Genre"}, {"field": "ROI", "aggregate": "mean", "format": ".2f"}]
-          }
-        },
-        {
-          "width": "container", "height": 300,
-          "title": "Költségvetés vs. Bevétel",
-          "transform": [
-             { "filter": "datum['Production Budget'] != null && datum['Worldwide Gross'] != null" },
-             { "filter": {"param": "genre_select"} }
-          ],
-          "mark": { "type": "circle", "opacity": 0.6, "size": 60 },
-          "encoding": {
-            "x": { "field": "Production Budget", "type": "quantitative", "scale": {"type": "log"}, "title": "Költségvetés (Log skála)" },
-            "y": { "field": "Worldwide Gross", "type": "quantitative", "scale": {"type": "log"}, "title": "Bevétel (Log skála)" },
-            "color": { "field": "Major Genre", "type": "nominal", "legend": null },
-            "tooltip": [
-              {"field": "Title", "title": "Cím"},
-              {"field": "Production Budget", "format": "$.2s", "title": "Költség"},
-              {"field": "Worldwide Gross", "format": "$.2s", "title": "Bevétel"}
-            ]
-          }
+            title: {
+                color: "#1e293b",
+                fontSize: 16,
+                anchor: "start",
+                fontWeight: 700
+            },
+            view: { stroke: "transparent" }
+        };
+
+        const embedOpts = { actions: false, renderer: "svg" };
+
+        // --- VEGA SPECIFIKÁCIÓK ---
+        
+        // Dashboard (ROI by Genre)
+        const specDashboard = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": { "url": DATA_URL },
+            "width": "container",
+            "autosize": {"type": "fit", "contains": "padding"},
+            "padding": {"left": 60, "top": 10, "right": 10, "bottom": 50},
+            "params": [
+                { "name": "filterGenre", "value": "All" },
+                { "name": "filterBudget", "value": 0 },
+                {
+                    "name": "genre_select",
+                    "select": {"type": "point", "encodings": ["x"], "on": "click", "toggle": false}
+                }
+            ],
+            "vconcat": [
+                {
+                    "width": "container",
+                    "height": 180,
+                    "title": "Átlagos ROI Műfajonként (Kattintson egy oszlopra!)",
+                    "transform": [
+                        { "filter": "datum['Production Budget'] > 0" },
+                        { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                        { "filter": "datum['Production Budget'] >= filterBudget * 1000000" },
+                        { "calculate": "(datum['Worldwide Gross'] - datum['Production Budget']) / datum['Production Budget']", "as": "ROI" }
+                    ],
+                    "mark": { "type": "bar", "cursor": "pointer", "cornerRadiusEnd": 10 },
+                    "encoding": {
+                        "x": {
+                            "field": "Major Genre",
+                            "sort": "-y",
+                            "axis": {"labelAngle": -45, "labelLimit": 100}
+                        },
+                        "y": {
+                            "field": "ROI",
+                            "aggregate": "mean",
+                            "title": "Átlagos ROI",
+                            "axis": {"format": ".0%"}
+                        },
+                        "color": {
+                            "condition": {"param": "genre_select", "value": "#2563eb"},
+                            "value": "#94a3b8"
+                        },
+                        "opacity": { "condition": { "param": "genre_select", "value": 1 }, "value": 0.9 },
+                        "tooltip": [
+                            {"field": "Major Genre", "title": "Műfaj"},
+                            {"field": "ROI", "aggregate": "mean", "format": ".1%", "title": "Átlagos ROI"}
+                        ]
+                    }
+                },
+                {
+                    "width": "container",
+                    "height": 240,
+                    "title": "Kockázati Mátrix (Kiválasztott Műfaj)",
+                    "transform": [
+                        { "filter": {"param": "genre_select"} },
+                        { "filter": "datum['Production Budget'] > 0 && datum['Worldwide Gross'] != null" },
+                        { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                        { "filter": "datum['Production Budget'] >= filterBudget * 1000000" },
+                        { "calculate": "datum['Worldwide Gross'] - datum['Production Budget']", "as": "profit" },
+                        { "filter": "datum.profit != null && !isNaN(datum.profit)" }
+                    ],
+                    "mark": {
+                        "type": "circle",
+                        "opacity": 0.85,
+                        "stroke": "#ffffff",
+                        "strokeWidth": 0.8
+                    },
+                    "encoding": {
+                        "x": {
+                            "field": "Production Budget",
+                            "scale": {"type": "log"},
+                            "title": "Költségvetés (Log skála)",
+                            "axis": {"format": "$.2s"}
+                        },
+                        "y": {
+                            "field": "Worldwide Gross",
+                            "scale": {"type": "log"},
+                            "title": "Bevétel (Log skála)",
+                            "axis": {"format": "$.2s"}
+                        },
+                        "size": {
+                            "field": "profit",
+                            "type": "quantitative",
+                            "scale": {"range": [30, 500], "zero": false},
+                            "legend": null
+                        },
+                        "color": {
+                            "condition": {
+                                "test": "datum['Worldwide Gross'] > datum['Production Budget']",
+                                "value": "#10b981"
+                            },
+                            "value": "#ef4444"
+                        },
+                        "tooltip": [
+                            {"field": "Title", "title": "Cím"},
+                            {"field": "Major Genre", "title": "Műfaj"},
+                            {"field": "Production Budget", "format": "$,.0f", "title": "Költségvetés"},
+                            {"field": "Worldwide Gross", "format": "$,.0f", "title": "Bevétel"},
+                            {"field": "profit", "format": "$,.0f", "title": "Profit"}
+                        ]
+                    }
+                }
+            ],
+            "config": commonConfig
+        };
+
+        // Scatter Plot
+        const specScatter = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": { "url": DATA_URL },
+            "width": "container",
+            "height": 420,
+            "autosize": {"type": "fit", "contains": "padding"},
+            "padding": {"left": 60, "top": 10, "right": 10, "bottom": 50},
+            "params": [
+                { "name": "filterGenre", "value": "All" },
+                { "name": "filterBudget", "value": 0 }
+            ],
+            "transform": [
+                { "filter": "datum['Production Budget'] > 0 && datum['Worldwide Gross'] > 0" },
+                { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                { "filter": "datum['Production Budget'] >= filterBudget * 1000000" },
+                { "calculate": "datum['Worldwide Gross'] - datum['Production Budget']", "as": "profit" },
+                { "filter": "isValid(datum.profit) && !isNaN(datum.profit)" }
+            ],
+            "mark": {
+                "type": "circle",
+                "opacity": 0.8,
+                "size": 100,
+                "stroke": "#ffffff",
+                "strokeWidth": 0.6
+            },
+            "encoding": {
+                "x": {
+                    "field": "Production Budget",
+                    "type": "quantitative",
+                    "scale": {"type": "log"},
+                    "axis": {"format": "$.2s", "title": "Költségvetés (Log skála)"}
+                },
+                "y": {
+                    "field": "Worldwide Gross",
+                    "type": "quantitative",
+                    "scale": {"type": "log"},
+                    "axis": {"format": "$.2s", "title": "Bevétel (Log skála)"}
+                },
+                "size": {
+                    "field": "profit",
+                    "type": "quantitative",
+                    "scale": {"range": [40, 1200], "zero": false},
+                    "legend": null
+                },
+                "color": {
+                    "condition": {
+                        "test": "datum['Worldwide Gross'] > datum['Production Budget']",
+                        "value": "#10b981"
+                    },
+                    "value": "#ef4444"
+                },
+                "tooltip": [
+                    {"field": "Title", "title": "Cím"},
+                    {"field": "Major Genre", "title": "Műfaj"},
+                    {"field": "Production Budget", "format": "$,.0f", "title": "Költségvetés"},
+                    {"field": "Worldwide Gross", "format": "$,.0f", "title": "Bevétel"},
+                    {"field": "profit", "format": "$,.0f", "title": "Profit"}
+                ]
+            },
+            "config": commonConfig
+        };
+
+        // Top ROI Bar Chart
+        const specBar = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": { "url": DATA_URL },
+            "width": "container",
+            "height": 420,
+            "autosize": {"type": "fit", "contains": "padding"},
+            "padding": {"left": 60, "top": 10, "right": 10, "bottom": 50},
+            "params": [
+                { "name": "filterGenre", "value": "All" },
+                { "name": "filterBudget", "value": 0 }
+            ],
+            "transform": [
+                { "filter": "datum['Production Budget'] > 0" },
+                { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                { "filter": "datum['Production Budget'] >= filterBudget * 1000000" },
+                { "calculate": "(datum['Worldwide Gross'] - datum['Production Budget']) / datum['Production Budget']", "as": "ROI" },
+                { "window": [{"op": "rank", "as": "rank"}], "sort": [{"field": "ROI", "order": "descending"}] },
+                { "filter": "datum.rank <= 10" }
+            ],
+            "mark": {
+                "type": "bar",
+                "cornerRadiusEnd": 10,
+                "color": "#2563eb",
+                "opacity": 0.95
+            },
+            "encoding": {
+                "x": {
+                    "field": "ROI",
+                    "type": "quantitative",
+                    "title": "ROI (Megtérülés)",
+                    "axis": {"format": ".1f"}
+                },
+                "y": {
+                    "field": "Title",
+                    "type": "nominal",
+                    "sort": "-x",
+                    "title": null,
+                    "axis": {"labelLimit": 150}
+                },
+                "tooltip": [
+                    {"field": "Title", "title": "Cím"},
+                    {"field": "ROI", "format": ".2f", "title": "ROI"},
+                    {"field": "Major Genre", "title": "Műfaj"}
+                ]
+            },
+            "config": commonConfig
+        };
+
+        // Heatmap
+        const specHeatmap = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": { "url": DATA_URL },
+            "width": "container",
+            "height": 350,
+            "autosize": {"type": "fit", "contains": "padding"},
+            "padding": {"left": 10, "top": 10, "right": 10, "bottom": 50},
+            "params": [
+                { "name": "filterGenre", "value": "All" },
+                { "name": "filterBudget", "value": 0 }
+            ],
+            "transform": [
+                { "filter": "datum['Release Date'] != null && datum['Major Genre'] != null" },
+                { "filter": "datum['Worldwide Gross'] != null" },
+                { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                { "filter": "datum['Production Budget'] >= filterBudget * 1000000" }
+            ],
+            "mark": {
+                "type": "rect",
+                "cornerRadius": 3,
+                "stroke": "white",
+                "strokeWidth": 1
+            },
+            "encoding": {
+                "x": {
+                    "timeUnit": "month",
+                    "field": "Release Date",
+                    "type": "ordinal",
+                    "title": "Hónap",
+                    "axis": {"format": "%b", "labelAngle": -45}
+                },
+                "y": {
+                    "field": "Major Genre",
+                    "type": "nominal",
+                    "title": null,
+                    "sort": {"op": "sum", "field": "Worldwide Gross", "order": "descending"}
+                },
+                "color": {
+                    "field": "Worldwide Gross",
+                    "aggregate": "mean",
+                    "type": "quantitative",
+                    "scale": {"scheme": "viridis"},
+                    "legend": {"title": "Átlagbevétel ($)", "format": "$,.0s"}
+                },
+                "tooltip": [
+                    {"field": "Major Genre", "title": "Műfaj"},
+                    {"timeUnit": "month", "field": "Release Date", "title": "Hónap"},
+                    {"field": "Worldwide Gross", "aggregate": "mean", "format": "$,.0f", "title": "Átlagbevétel"}
+                ]
+            },
+            "config": commonConfig
+        };
+
+        // Line Chart (Trend) - INFLÁCIÓVAL KORRIGÁLVA
+        const specLine = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": { "url": DATA_URL },
+            "width": "container",
+            "height": 350,
+            "autosize": {"type": "fit", "contains": "padding"},
+            "padding": {"left": 60, "top": 10, "right": 10, "bottom": 50},
+            "params": [
+                { "name": "filterGenre", "value": "All" },
+                { "name": "filterBudget", "value": 0 }
+            ],
+            "transform": [
+                // 1. Alap szűrések; a CPI alapú számítás előre lesz végezve a beágyazott adatkészletben
+                { "filter": "datum['Release Date'] != null && datum['Worldwide Gross'] != null" },
+                { "filter": "filterGenre == 'All' || datum['Major Genre'] == filterGenre" },
+                { "filter": "datum['Production Budget'] >= filterBudget * 1000000" }
+            ],
+            // 6. Layering: Két vonal (Eredeti vs. Korrigált)
+            "layer": [
+                {
+                    "mark": { "type": "area", "color": "#10b981", "opacity": 0.08, "interpolate": "monotone" },
+                    "encoding": {
+                        "x": { "timeUnit": "year", "field": "Release Date", "type": "temporal" },
+                        "y": { "field": "AdjustedGross", "aggregate": "sum", "type": "quantitative" }
+                    }
+                },
+                {
+                    "mark": { "type": "line", "color": "#2563eb", "opacity": 0.65, "strokeWidth": 2, "strokeDash": [5, 5], "interpolate": "monotone" },
+                    "encoding": {
+                        "x": { "timeUnit": "year", "field": "Release Date", "type": "temporal", "title": null, "axis": {"grid": false} },
+                        "y": { "field": "Worldwide Gross", "aggregate": "sum", "type": "quantitative", "title": "Bevétel ($)", "axis": {"format": "$.2s"} },
+                        "tooltip": [
+                            {"timeUnit": "year", "field": "Release Date", "title": "Év"},
+                            {"field": "Worldwide Gross", "aggregate": "sum", "format": "$.2s", "title": "Eredeti Bevétel"}
+                        ]
+                    }
+                },
+                {
+                    "mark": { "type": "line", "color": "#10b981", "strokeWidth": 3, "interpolate": "monotone" },
+                    "encoding": {
+                        "x": { "timeUnit": "year", "field": "Release Date", "type": "temporal", "axis": {"grid": false} },
+                        "y": { "field": "AdjustedGross", "aggregate": "sum", "type": "quantitative", "axis": {"format": "$.2s"} },
+                        "tooltip": [
+                            {"timeUnit": "year", "field": "Release Date", "title": "Év"},
+                            {"field": "AdjustedGross", "aggregate": "sum", "format": "$.2s", "title": "Inflációval Korrigált (Mai érték)"},
+                            {"field": "Multiplier", "format": ".2f", "title": "CPI Szorzó"}
+                        ]
+                    }
+                }
+            ],
+            "config": commonConfig,
+            "title": {
+                "text": "Piaci Trendek: Eredeti vs. Inflációval Korrigált",
+                "subtitle": "Kék szaggatott: Eredeti bevétel | Zöld: Mai érték (2016 dollár)"
+            }
+        };
+
+        // --- INITIALIZATION ---
+        let viewDashboard, viewScatter, viewBar, viewHeatmap, viewLine;
+
+        (async function init() {
+            // Fetch movies and CPI, preprocess AdjustedGross per movie and attach as inline dataset for the line chart
+            try {
+                const [moviesResp, cpiResp] = await Promise.all([fetch(DATA_URL), fetch('cpi.json')]);
+                let movies = [];
+                let cpiData = [];
+
+                if (moviesResp.ok) movies = await moviesResp.json();
+                else console.warn('Could not load', DATA_URL, 'status:', moviesResp.status);
+
+                if (cpiResp.ok) cpiData = await cpiResp.json();
+                else console.warn('Could not load cpi.json, status:', cpiResp.status);
+
+                const cpiMap = {};
+                cpiData.forEach(d => { cpiMap[d.Year] = d.Multiplier; });
+
+                const processed = movies.map(m => {
+                    const gross = m['Worldwide Gross'];
+                    const rd = m['Release Date'];
+                    let mult = 1.5;
+                    if (rd) {
+                        const y = (new Date(rd)).getFullYear();
+                        if (!isNaN(y) && cpiMap[y] != null) mult = cpiMap[y];
+                    }
+                    const adjusted = (gross != null && !isNaN(gross)) ? gross * mult : null;
+                    return Object.assign({}, m, { Multiplier: mult, AdjustedGross: adjusted });
+                });
+
+                specLine.data = { values: processed };
+            } catch (err) {
+                console.warn('Error fetching or processing data for line chart:', err);
+                // fallback to original URL data (without precomputed adjusted values)
+                specLine.data = { url: DATA_URL };
+            }
+
+            // Now embed all charts (specLine uses the inline dataset if available)
+            Promise.allSettled([
+                vegaEmbed('#vis_dashboard', specDashboard, embedOpts).then(res => {
+                    viewDashboard = res.view;
+                    res.view.addSignalListener('genre_select', (name, value) => {
+                        if (value && value['Major Genre'] && value['Major Genre'].length > 0) {
+                            const genre = value['Major Genre'][0];
+                            document.getElementById('genreFilter').value = genre;
+                            updateDashboard();
+                        }
+                    });
+                    return res;
+                }).catch(err => {
+                    console.error('Error loading dashboard:', err);
+                    return null;
+                }),
+                vegaEmbed('#vis_scatter', specScatter, embedOpts).then(res => {
+                    viewScatter = res.view;
+                    return res;
+                }).catch(err => {
+                    console.error('Error loading scatter:', err);
+                    return null;
+                }),
+                vegaEmbed('#vis_bar', specBar, embedOpts).then(res => {
+                    viewBar = res.view;
+                    return res;
+                }).catch(err => {
+                    console.error('Error loading bar:', err);
+                    return null;
+                }),
+                vegaEmbed('#vis_heatmap', specHeatmap, embedOpts).then(res => {
+                    viewHeatmap = res.view;
+                    return res;
+                }).catch(err => {
+                    console.error('Error loading heatmap:', err);
+                    return null;
+                }),
+                vegaEmbed('#vis_line', specLine, embedOpts).then(res => {
+                    viewLine = res.view;
+                    return res;
+                }).catch(err => {
+                    console.error('Error loading line:', err);
+                    return null;
+                })
+            ]).then(() => {
+                // Initial KPI calculation
+                calculateKPI();
+            });
+        })();
+
+        // --- UPDATE FUNCTIONS ---
+        function updateBudgetLabel() {
+            const budgetVal = document.getElementById('budgetFilter').value;
+            document.getElementById('budgetLabel').innerText = `$${budgetVal}M`;
         }
-      ],
-      "config": commonConfig
-    }, embedOpts);
 
-    // 3. CHART: HEATMAP
-    vegaEmbed('#viz_heatmap', {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "url": "movies_clean.json" },
-      "width": "container", "height": 300,
-      "autosize": {"type": "fit", "contains": "padding"},
-      "transform": [
-        { "filter": "datum['Release Date'] != null && datum['Major Genre'] != null" },
-        { "timeUnit": "month", "field": "Release Date", "as": "Month" }
-      ],
-      "mark": "rect",
-      "encoding": {
-        "x": { "field": "Month", "type": "ordinal", "timeUnit": "month", "title": "Kiadás Hónapja", "axis": {"format": "%b"} },
-        "y": { "field": "Major Genre", "type": "nominal", "title": null },
-        "color": {
-          "field": "Worldwide Gross",
-          "aggregate": "mean",
-          "type": "quantitative",
-          "scale": { "scheme": "tealblues" },
-          "legend": { "title": "Átlagbevétel ($)" }
-        },
-        "tooltip": [
-          {"field": "Major Genre", "title": "Műfaj"},
-          {"field": "Month", "timeUnit": "month", "title": "Hónap"},
-          {"field": "Worldwide Gross", "aggregate": "mean", "format": "$.2s", "title": "Átlag"}
-        ]
-      },
-      "config": commonConfig
-    }, embedOpts);
+        function updateDashboard() {
+            const genreVal = document.getElementById('genreFilter').value;
+            const budgetVal = parseInt(document.getElementById('budgetFilter').value);
 
-    // 4. CHART: TOPLIST
-    vegaEmbed('#viz_toplist', {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "url": "movies_clean.json" },
-      "width": "container", "height": 250,
-      "autosize": {"type": "fit", "contains": "padding"},
-      "transform": [
-        { "filter": "datum['Production Budget'] > 5000000" },
-        { "calculate": "(datum['Worldwide Gross'] - datum['Production Budget']) / datum['Production Budget']", "as": "ROI" },
-        { "window": [{"op": "rank", "as": "rank"}], "sort": [{"field": "ROI", "order": "descending"}] },
-        { "filter": "datum.rank <= 5" }
-      ],
-      "mark": { "type": "bar", "color": "#66fcf1" },
-      "encoding": {
-        "x": { "field": "ROI", "type": "quantitative", "title": "ROI (Hányszoros megtérülés)" },
-        "y": { "field": "Title", "type": "nominal", "sort": "-x", "title": null },
-        "tooltip": [
-          {"field": "Title"},
-          {"field": "ROI", "format": ".1f"},
-          {"field": "Major Genre"}
-        ]
-      },
-      "config": commonConfig
-    }, embedOpts);
+            appState.genre = genreVal;
+            appState.minBudget = budgetVal;
 
-  </script>
+            // Update all views with proper error handling
+            const views = [
+                { name: 'dashboard', view: viewDashboard },
+                { name: 'scatter', view: viewScatter },
+                { name: 'bar', view: viewBar },
+                { name: 'heatmap', view: viewHeatmap },
+                { name: 'line', view: viewLine }
+            ];
+            
+            views.forEach(({ name, view }) => {
+                if (view && typeof view.signal === 'function') {
+                    try {
+                        view.signal('filterGenre', genreVal)
+                            .signal('filterBudget', budgetVal)
+                            .run();
+                    } catch (err) {
+                        console.warn(`Error updating ${name} chart:`, err);
+                    }
+                }
+            });
+
+            // Update KPI
+            calculateKPI();
+        }
+
+        // Real KPI calculation
+        async function calculateKPI() {
+            try {
+                const response = await fetch(DATA_URL);
+                const data = await response.json();
+                
+                const genreVal = appState.genre;
+                const budgetVal = appState.minBudget * 1000000;
+
+                const filtered = data.filter(movie => {
+                    if (movie['Production Budget'] <= 0) return false;
+                    if (budgetVal > 0 && movie['Production Budget'] < budgetVal) return false;
+                    if (genreVal !== 'All' && movie['Major Genre'] !== genreVal) return false;
+                    return true;
+                });
+
+                document.getElementById('kpiCount').innerText = filtered.length + " db";
+            } catch (error) {
+                console.error('Error calculating KPI:', error);
+                document.getElementById('kpiCount').innerText = "N/A";
+            }
+        }
+
+    </script>
 </body>
 </html>
